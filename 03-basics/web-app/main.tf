@@ -2,7 +2,7 @@ terraform {
   # Assumes s3 bucket and dynamo DB table already set up
   # See /code/03-basics/aws-backend
   backend "s3" {
-    bucket         = "devops-directive-tf-state"
+    bucket         = "devops-directive-tf-state-anyi"
     key            = "03-basics/web-app/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-state-locking"
@@ -25,7 +25,8 @@ resource "aws_instance" "instance_1" {
   ami             = "ami-011899242bb902164" # Ubuntu 20.04 LTS // us-east-1
   instance_type   = "t2.micro"
   security_groups = [aws_security_group.instances.name]
-  user_data       = <<-EOF
+
+  user_data = <<-EOF
               #!/bin/bash
               echo "Hello, World 1" > index.html
               python3 -m http.server 8080 &
@@ -36,37 +37,46 @@ resource "aws_instance" "instance_2" {
   ami             = "ami-011899242bb902164" # Ubuntu 20.04 LTS // us-east-1
   instance_type   = "t2.micro"
   security_groups = [aws_security_group.instances.name]
-  user_data       = <<-EOF
+
+  user_data = <<-EOF
               #!/bin/bash
               echo "Hello, World 2" > index.html
               python3 -m http.server 8080 &
               EOF
 }
 
-resource "aws_s3_bucket" "bucket" {
-  bucket        = "devops-directive-web-app-data"
+resource "aws_s3_bucket" "web_app_bkt" {
+  bucket        = "devops-directive-web-app-data-anyi"
   force_destroy = true
-  versioning {
-    enabled = true
-  }
+}
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
+resource "aws_s3_bucket_versioning" "bkt_versioning" {
+  bucket = aws_s3_bucket.web_app_bkt.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+resource "aws_s3_bucket_server_side_encryption_configuration" "bkt_encrypt" {
+  bucket = aws_s3_bucket.web_app_bkt.bucket
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
     }
   }
 }
 
+# data block will reference an exising vpc in aws
 data "aws_vpc" "default_vpc" {
   default = true
 }
 
+# data block will reference an exising vpc in aws
 data "aws_subnet_ids" "default_subnet" {
   vpc_id = data.aws_vpc.default_vpc.id
 }
 
+# allows inbound trafic
 resource "aws_security_group" "instances" {
   name = "instance-security-group"
 }
@@ -178,16 +188,15 @@ resource "aws_lb" "load_balancer" {
   load_balancer_type = "application"
   subnets            = data.aws_subnet_ids.default_subnet.ids
   security_groups    = [aws_security_group.alb.id]
-
 }
 
 resource "aws_route53_zone" "primary" {
-  name = "devopsdeployed.com"
+  name = "anyioneta.com"
 }
 
 resource "aws_route53_record" "root" {
   zone_id = aws_route53_zone.primary.zone_id
-  name    = "devopsdeployed.com"
+  name    = "anyioneta.com"
   type    = "A"
 
   alias {
@@ -201,10 +210,10 @@ resource "aws_db_instance" "db_instance" {
   allocated_storage   = 20
   storage_type        = "standard"
   engine              = "postgres"
-  engine_version      = "12.5"
+  engine_version      = "12.7"
   instance_class      = "db.t2.micro"
   name                = "mydb"
-  username            = "foo"
-  password            = "foobarbaz"
+  username            = "anyioneta"
+  password            = "abcd1234"
   skip_final_snapshot = true
 }
