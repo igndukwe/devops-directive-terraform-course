@@ -30,7 +30,15 @@ AWS Terraform provider documentation: https://registry.terraform.io/providers/ha
 
 `./main.tf` contains minimal configuration to provision an EC2 instance.
 
+## AWS CLI
+
 1. `aws configure`
+
+## Terraform CLI
+
 2. `terraform init`
 3. `terraform plan`
 4. `terraform apply`
+5. `terraform apply -auto-approve`
+6. `terraform destroy`
+7. `terraform destroy -auto-approve`
