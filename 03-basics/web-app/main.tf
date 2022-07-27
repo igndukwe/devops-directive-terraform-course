@@ -1,3 +1,5 @@
+#https://www.youtube.com/watch?v=7xngnjfIlK4&t=2973s
+
 terraform {
   # Assumes s3 bucket and dynamo DB table already set up
   # See /code/03-basics/aws-backend
@@ -206,6 +208,7 @@ resource "aws_route53_record" "root" {
   }
 }
 
+#database
 resource "aws_db_instance" "db_instance" {
   allocated_storage   = 20
   storage_type        = "standard"
