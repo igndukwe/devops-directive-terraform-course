@@ -2,8 +2,9 @@ terraform {
   # Assumes s3 bucket and dynamo DB table already set up
   # See /code/03-basics/aws-backend
   backend "s3" {
-    bucket         = "devops-directive-tf-state"
-    key            = "04-variables-and-outputs/web-app/terraform.tfstate"
+    bucket = "devops-directive-tf-state-anyi"
+    #key    = "04-variables-and-outputs/web-app/terraform.tfstate"
+    key            = "03-basics/web-app/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-state-locking"
     encrypt        = true
@@ -44,26 +45,34 @@ resource "aws_instance" "instance_2" {
               EOF
 }
 
-resource "aws_s3_bucket" "bucket" {
+resource "aws_s3_bucket" "web_app_bkt" {
   bucket        = var.bucket_name
   force_destroy = true
-  versioning {
-    enabled = true
-  }
+}
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
+resource "aws_s3_bucket_versioning" "bkt_versioning" {
+  bucket = aws_s3_bucket.web_app_bkt.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+resource "aws_s3_bucket_server_side_encryption_configuration" "bkt_encrypt" {
+  bucket = aws_s3_bucket.web_app_bkt.bucket
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
     }
   }
 }
 
+
+# data block will reference an exising default vpc in aws
 data "aws_vpc" "default_vpc" {
   default = true
 }
 
+# data block will reference an exising default subnets in aws
 data "aws_subnet_ids" "default_subnet" {
   vpc_id = data.aws_vpc.default_vpc.id
 }
@@ -202,7 +211,7 @@ resource "aws_db_instance" "db_instance" {
   allocated_storage   = 20
   storage_type        = "standard"
   engine              = "postgres"
-  engine_version      = "12.5"
+  engine_version      = "12.7"
   instance_class      = "db.t2.micro"
   name                = var.db_name
   username            = var.db_user

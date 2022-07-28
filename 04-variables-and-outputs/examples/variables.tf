@@ -26,5 +26,6 @@ variable "db_user" {
 variable "db_pass" {
   description = "password for database"
   type        = string
-  sensitive   = true
+  # because we do not want it echoed in the terminal
+  sensitive = true
 }
